@@ -22,7 +22,6 @@ DEVICE = torch.device("cpu")
 # -----------------------
 @st.cache_resource
 def load_model():
-    # Replace with the direct link to the .pth file in Releases > Assets
     URL = "https://github.com/Manuelorejo/Dyslexia-Detector/releases/download/v1.0/dyslexia_cnn.pth"
 
     # Download if not exists
@@ -87,5 +86,6 @@ if uploaded_file:
     - Corrected: Reversals corrected during writing
     - Reversal: Persistent letter/number reversals
     """)
+
 
 
