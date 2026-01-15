@@ -3,11 +3,16 @@ import torch
 from torchvision import transforms
 from PIL import Image
 from model import DyslexiaCNN
-
+import os
+import requests
 # -----------------------
 # Config
 # -----------------------
 st.set_page_config(page_title="Dyslexia Detection", layout="centered")
+
+
+
+
 
 CLASS_NAMES = ["corrected", "normal", "reversal"]
 DEVICE = torch.device("cpu")
@@ -17,9 +22,14 @@ DEVICE = torch.device("cpu")
 # -----------------------
 @st.cache_resource
 def load_model():
-    model = DyslexiaCNN()
-    model.load_state_dict(torch.load("dyslexia_cnn.pth", map_location=DEVICE))
-    model.eval()
+    URL = "https://github.com/Manuelorejo/Dyslexia-Detector/releases/tag/v1.0"
+
+    if not os.path.exists("dyslexia_cnn.pth"):
+        r = requests.get(URL)
+        with open("dyslexia_cnn.pth", "wb") as f:
+            f.write(r.content)
+    
+    model.load_state_dict(torch.load("dyslexia_cnn.pth", map_location="cpu"))
     return model
 
 model = load_model()
@@ -69,3 +79,4 @@ if uploaded_file:
     - Corrected: Reversals corrected during writing
     - Reversal: Persistent letter/number reversals
     """)
+
