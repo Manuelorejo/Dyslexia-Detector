@@ -36,7 +36,8 @@ def load_model():
 
     # Initialize model and load weights
     model = DyslexiaCNN()
-    model.load_state_dict(torch.load("dyslexia_cnn.pth", map_location="cpu"))
+    state = torch.load("dyslexia_cnn.pth", map_location="cpu", weights_only=False)
+    model.load_state_dict(state)
     model.eval()
     return model
 model = load_model()
@@ -86,6 +87,7 @@ if uploaded_file:
     - Corrected: Reversals corrected during writing
     - Reversal: Persistent letter/number reversals
     """)
+
 
 
 
