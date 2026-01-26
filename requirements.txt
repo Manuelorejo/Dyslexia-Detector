@@ -3,4 +3,7 @@ torch
 torchvision
 pillow
 requests
+pandas
+plotly
+
 
