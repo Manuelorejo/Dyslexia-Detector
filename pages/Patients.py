@@ -26,11 +26,26 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 # -----------------------
 @st.cache_resource
 def load_model():
+    # Replace with the direct link to the .pth file in Releases > Assets
+    URL = "https://github.com/Manuelorejo/Dyslexia-Detector/releases/download/v1.0/dyslexia_cnn.pth"
+
+    # Download if not exists
+    if not os.path.exists("dyslexia_cnn.pth"):
+        print("Downloading model...")
+        r = requests.get(URL, stream=True)
+        with open("dyslexia_cnn.pth", "wb") as f:
+            for chunk in r.iter_content(chunk_size=8192):
+                if chunk:
+                    f.write(chunk)
+        print("Download completed!")
+
+    # Initialize model and load weights
     model = DyslexiaCNN()
-    model.load_state_dict(torch.load("dyslexia_cnn.pth", map_location=DEVICE))
+    model.load_state_dict(torch.load("dyslexia_cnn.pth", map_location="cpu"))
     model.eval()
     return model
 
+# Load the model
 model = load_model()
 
 # -----------------------
