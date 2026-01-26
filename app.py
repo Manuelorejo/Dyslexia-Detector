@@ -1,93 +1,78 @@
 import streamlit as st
-import torch
-from torchvision import transforms
-from PIL import Image
-from model import DyslexiaCNN
-import os
-import requests
-# -----------------------
-# Config
-# -----------------------
-st.set_page_config(page_title="Dyslexia Detection", layout="centered")
-
-
-
-
-
-CLASS_NAMES = ["corrected", "normal", "reversal"]
-DEVICE = torch.device("cpu")
 
 # -----------------------
-# Load Model
+# Page Config
 # -----------------------
-@st.cache_resource
-def load_model():
-    URL = "https://github.com/Manuelorejo/Dyslexia-Detector/releases/download/v1.0/dyslexia_cnn.pth"
-
-    # Download if not exists
-    if not os.path.exists("dyslexia_cnn.pth"):
-        print("Downloading model...")
-        r = requests.get(URL, stream=True)
-        with open("dyslexia_cnn.pth", "wb") as f:
-            for chunk in r.iter_content(chunk_size=8192):
-                if chunk:
-                    f.write(chunk)
-        print("Download completed!")
-
-    # Initialize model and load weights
-    model = DyslexiaCNN()
-    state = torch.load("dyslexia_cnn.pth", map_location="cpu", weights_only=False)
-    model.load_state_dict(state)
-    model.eval()
-    return model
-model = load_model()
+st.set_page_config(page_title="Dyslexia Detection", layout="wide")
+st.markdown("""
+<style>
+    .main {background-color: #f5f5f5; padding: 2rem;}
+    h1, h2, h3 {color: #1f4e79;}
+    .stButton>button {background-color: #1f4e79; color: white; border-radius: 10px; padding: 0.5rem 1rem;}
+    .stButton>button:hover {background-color: #145374; color: white;}
+</style>
+""", unsafe_allow_html=True)
 
 # -----------------------
-# Image Transform
+# Hero Section
 # -----------------------
-transform = transforms.Compose([
-    transforms.Grayscale(num_output_channels=1),
-    transforms.Resize((224, 224)),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.5], std=[0.5])
-])
-
-# -----------------------
-# UI
-# -----------------------
+st.markdown("<div style='text-align:center'>", unsafe_allow_html=True)
 st.title("📝 Dyslexia Handwriting Detection")
-st.write("Upload a handwriting image to classify dyslexic writing patterns.")
+st.subheader("Empowering doctors to detect dyslexia through handwriting analysis")
+st.markdown("""
+Detect, analyze, and track handwriting patterns to provide insights into dyslexic tendencies.
+Our AI-powered system leverages deep learning to assist with patient assessment and management.
+""")
+st.markdown("</div>", unsafe_allow_html=True)
 
-uploaded_file = st.file_uploader(
-    "Upload handwriting image",
-    type=["jpg", "png", "jpeg"]
-)
+st.markdown("---")
 
-if uploaded_file:
-    image = Image.open(uploaded_file).convert("RGB")
-    st.image(image, caption="Uploaded Image", use_container_width=True)
+# -----------------------
+# Features Section
+# -----------------------
+st.subheader("🌟 Key Features")
+cols = st.columns(3)
+features = [
+    ("Patient Management", "Add and manage patient profiles with detailed info and history."),
+    ("Handwriting Analysis", "Upload handwriting images and get accurate predictions with visualizations."),
+    ("Analytics Dashboard", "Track overall and individual predictions with interactive charts.")
+]
 
-    # Preprocess
-    input_tensor = transform(image).unsqueeze(0)
+for col, (title, desc) in zip(cols, features):
+    col.markdown(f"### {title}")
+    col.write(desc)
 
-    # Prediction
-    with torch.no_grad():
-        outputs = model(input_tensor)
-        probs = torch.softmax(outputs, dim=1)
-        pred_class = torch.argmax(probs, dim=1).item()
+st.markdown("---")
 
-    st.markdown("### 📊 Prediction Result")
-    st.success(f"**Class:** {CLASS_NAMES[pred_class]}")
-    st.write(f"Confidence: **{probs[0][pred_class]*100:.2f}%**")
+# -----------------------
+# Call to Action Section
+# -----------------------
+st.subheader("🚀 Get Started")
+col1, col2 = st.columns(2)
 
-    st.markdown("---")
-    st.caption("""
-    **Class meanings**
-    - Normal: Typical handwriting
-    - Corrected: Reversals corrected during writing
-    - Reversal: Persistent letter/number reversals
-    """)
+with col1:
+    if st.button("Go to Dashboard"):
+        st.switch_page("pages/dashboard.py")
+    
 
+with col2:
+    if st.button("Go to Prediction System"):
+        st.switch_page("pages/patients.py")
 
+st.markdown("---")
 
+# -----------------------
+# About Section
+# -----------------------
+st.subheader("📚 About This Project")
+st.markdown("""
+This application was developed to support medical professionals in detecting dyslexia through handwriting.  
+It uses a **Convolutional Neural Network (CNN)** trained on handwriting datasets to classify patterns into:
 
+- **Normal:** Typical handwriting  
+- **Corrected:** Letters/numbers initially reversed but corrected  
+- **Reversal:** Persistent reversals during writing  
+
+Every prediction is stored in the patient’s history, contributing to an **overall verdict**.  
+Interactive visualizations allow tracking trends across patients and over time.
+""")
