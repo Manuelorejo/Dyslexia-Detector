@@ -52,12 +52,12 @@ col1, col2 = st.columns(2)
 
 with col1:
     if st.button("Go to Dashboard"):
-        st.switch_page("pages/dashboard.py")
+        st.switch_page("pages/Dashboard.py")
     
 
 with col2:
     if st.button("Go to Prediction System"):
-        st.switch_page("pages/patients.py")
+        st.switch_page("pages/Patients.py")
 
 st.markdown("---")
 
@@ -76,3 +76,4 @@ It uses a **Convolutional Neural Network (CNN)** trained on handwriting datasets
 Every prediction is stored in the patient’s history, contributing to an **overall verdict**.  
 Interactive visualizations allow tracking trends across patients and over time.
 """)
+
