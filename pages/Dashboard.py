@@ -8,6 +8,13 @@ DB_FILE = "patients.db"
 st.set_page_config(page_title="Dyslexia Dashboard", layout="wide")
 
 # -----------------------
+# 🔐 LOGIN PROTECTION
+# -----------------------
+if "authenticated" not in st.session_state or not st.session_state.authenticated:
+    st.warning("🔒 Please login to access the dashboard.")
+    st.stop()
+
+# -----------------------
 # CUSTOM CSS FOR DASHBOARD
 # -----------------------
 st.markdown("""
@@ -76,20 +83,25 @@ all_patients = c.fetchall()
 
 st.subheader("👥 Patients Overview", anchor="patients-overview")
 cols = st.columns(3)
+
 for i, (pid, name, age, gender) in enumerate(all_patients):
     with cols[i % 3]:
-        c.execute("SELECT COUNT(*), MAX(timestamp) FROM Predictions WHERE patient_id=?", (pid,))
+        c.execute(
+            "SELECT COUNT(*), MAX(timestamp) FROM Predictions WHERE patient_id=?",
+            (pid,)
+        )
         total_preds, last_pred = c.fetchone()
         last_pred_str = last_pred if last_pred else "No predictions"
-        # Custom HTML card
+
         st.markdown(f"""
-        <div class="patient-card" onclick="window.location.reload()">
+        <div class="patient-card">
             <h3>{name}</h3>
             <small>Age: {age}, {gender}</small><br>
             <small>Predictions: {total_preds}</small><br>
             <small>Last Prediction: {last_pred_str}</small>
         </div>
         """, unsafe_allow_html=True)
+
         if st.button(f"Select {pid}", key=f"btn_{pid}"):
             st.session_state.selected_patient_id = pid
             st.session_state.selected_patient_name = name
@@ -100,6 +112,7 @@ for i, (pid, name, age, gender) in enumerate(all_patients):
 # -----------------------
 c.execute("SELECT prediction_class, COUNT(*) FROM Predictions GROUP BY prediction_class")
 overall_counts = c.fetchall()
+
 if overall_counts:
     classes = [row[0] for row in overall_counts]
     counts = [row[1] for row in overall_counts]
@@ -109,14 +122,24 @@ if overall_counts:
         values=counts,
         color=classes,
         color_discrete_map={
-            "corrected":"#14B8A6", 
-            "normal":"#0E6BA8", 
-            "reversal":"#EF4444"
+            "corrected": "#14B8A6",
+            "normal": "#0E6BA8",
+            "reversal": "#EF4444"
         },
         title="Overall Distribution of Predictions"
     )
-    fig_overall.update_traces(textinfo='percent+label', hovertemplate='%{label}: %{value}')
-    fig_overall.update_layout(title_font_size=22, legend_title_text='Prediction Class', paper_bgcolor='white')
+
+    fig_overall.update_traces(
+        textinfo='percent+label',
+        hovertemplate='%{label}: %{value}'
+    )
+
+    fig_overall.update_layout(
+        title_font_size=22,
+        legend_title_text='Prediction Class',
+        paper_bgcolor='white'
+    )
+
     st.plotly_chart(fig_overall, use_container_width=True)
 
 # -----------------------
@@ -124,11 +147,13 @@ if overall_counts:
 # -----------------------
 c.execute("SELECT DATE(timestamp), COUNT(*) FROM Predictions GROUP BY DATE(timestamp)")
 trend_data = c.fetchall()
+
 if trend_data:
     dates = [row[0] for row in trend_data]
     counts_over_time = [row[1] for row in trend_data]
 
     fig_trend = go.Figure()
+
     fig_trend.add_trace(go.Scatter(
         x=dates,
         y=counts_over_time,
@@ -136,6 +161,7 @@ if trend_data:
         line=dict(color='#0E6BA8', width=3),
         marker=dict(size=8, color='#14B8A6')
     ))
+
     fig_trend.update_layout(
         title="Predictions Over Time",
         title_font_size=22,
@@ -146,6 +172,7 @@ if trend_data:
         xaxis=dict(showgrid=True, gridcolor="#E5E7EB"),
         yaxis=dict(showgrid=True, gridcolor="#E5E7EB")
     )
+
     st.plotly_chart(fig_trend, use_container_width=True)
 
 conn.close()
