@@ -1,4 +1,5 @@
 import streamlit as st
+import time
 
 st.set_page_config(page_title="Dyslexia Detection", layout="wide")
 
@@ -149,12 +150,12 @@ col1, col2 = st.columns(2)
 
 with col1:
     if st.button("Go to Dashboard"):
-        st.experimental_set_query_params(page="dashboard")
+        time.sleep(5)
         st.switch_page("pages/Dashboard.py")
 
 with col2:
     if st.button("Go to Prediction System"):
-        st.experimental_set_query_params(page="prediction")
+        time.sleep(5)
         st.switch_page("pages/Patients.py")
 
 st.markdown("---")
@@ -174,4 +175,5 @@ It uses a **Convolutional Neural Network (CNN)** trained on handwriting datasets
 Every prediction is stored in the patient’s history, contributing to an **overall verdict**.  
 Interactive visualizations allow tracking trends across patients and over time.
 """)
+
     
