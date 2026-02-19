@@ -4,6 +4,7 @@ torchvision
 pillow
 pandas
 plotly
+requests
 
 
 
