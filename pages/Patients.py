@@ -271,16 +271,22 @@ patient_dict = {pname: pid for pid, pname in patients}
 # If coming from dashboard
 if "selected_patient_id" in st.session_state:
     selected_patient_id = st.session_state.selected_patient_id
-    selected_patient = next(
-        pname for pname, pid in patient_dict.items()
-        if pid == selected_patient_id
-    )
+    
+    if selected_patient_id in patient_dict.values():
+        # Safe to get the patient name
+        selected_patient = next(
+            pname for pname, pid in patient_dict.items()
+            if pid == selected_patient_id
+        )
+    else:
+        # Patient ID not in dict (deleted or new session) → fallback
+        selected_patient_id, selected_patient = list(patient_dict.items())[0]
+        st.session_state.selected_patient_id = selected_patient_id
 else:
-    selected_patient = st.sidebar.selectbox(
-        "Select Patient",
-        options=patient_names
-    )
-    selected_patient_id = patient_dict[selected_patient]
+    # No session_state → select the first patient by default
+    selected_patient_id, selected_patient = list(patient_dict.items())[0]
+    st.session_state.selected_patient_id = selected_patient_id
+
 
 # SECURITY CHECK
 if not verify_patient_ownership(selected_patient_id, user_id):
@@ -366,6 +372,7 @@ if history:
 else:
 
     st.info("No predictions yet for this patient.")
+
 
 
 
