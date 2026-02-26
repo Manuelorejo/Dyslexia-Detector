@@ -10,6 +10,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
 import requests
+from ..database import add_patient
 
 # -----------------------
 # PAGE CONFIG
@@ -344,3 +345,4 @@ if history:
 else:
 
     st.info("No predictions yet for this patient.")
+
