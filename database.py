@@ -38,7 +38,7 @@ def init_db():
         CREATE TABLE IF NOT EXISTS Predictions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             patient_id INTEGER NOT NULL,
-            filename TEXT
+            filename TEXT,
             prediction_class TEXT,
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(patient_id) REFERENCES Patients(patient_id)
@@ -97,4 +97,5 @@ def add_patient(user_id, name, age, gender):
     conn.close()
     
     
+
 
