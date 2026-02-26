@@ -208,6 +208,33 @@ def get_patient_history(patient_id):
 # -----------------------
 # SIDEBAR (FILTERED + SECURE)
 # -----------------------
+
+# -----------------------
+# ADD NEW PATIENT
+# -----------------------
+st.sidebar.markdown("### ➕ Add New Patient")
+
+new_patient_name = st.sidebar.text_input("Patient Name")
+
+if st.sidebar.button("Add Patient"):
+    if new_patient_name.strip() == "":
+        st.sidebar.error("Patient name cannot be empty.")
+    else:
+        # Add patient to DB
+        new_patient_id = add_patient(user_id, new_patient_name.strip())
+        st.sidebar.success(f"Patient '{new_patient_name}' added!")
+        
+        # Update session state and patient dict
+        st.session_state.selected_patient_id = new_patient_id
+        patients = get_patients(user_id)
+        patient_names = [pname for pid, pname in patients]
+        patient_dict = {pname: pid for pid, pname in patients}
+        selected_patient = new_patient_name
+        selected_patient_id = new_patient_id
+
+
+
+
 st.sidebar.title("👥 Patients")
 
 patients = get_patients(user_id)
@@ -315,4 +342,5 @@ if history:
     st.plotly_chart(fig_pie, use_container_width=True)
 
 else:
+
     st.info("No predictions yet for this patient.")
