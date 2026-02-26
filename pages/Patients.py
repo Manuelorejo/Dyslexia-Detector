@@ -11,7 +11,6 @@ import plotly.graph_objects as go
 import plotly.express as px
 import requests
 from ..database import add_patient
-
 # -----------------------
 # PAGE CONFIG
 # -----------------------
@@ -206,6 +205,15 @@ def get_patient_history(patient_id):
     conn.close()
     return rows
 
+def add_patient(user_id, name, age, gender):
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute(
+        "INSERT INTO Patients (user_id, name, age, gender) VALUES (?, ?, ?, ?)",
+        (user_id, name, age, gender)
+    )
+    conn.commit()
+    conn.close()
 # -----------------------
 # SIDEBAR (FILTERED + SECURE)
 # -----------------------
@@ -216,13 +224,21 @@ def get_patient_history(patient_id):
 st.sidebar.markdown("### ➕ Add New Patient")
 
 new_patient_name = st.sidebar.text_input("Patient Name")
+new_patient_age = st.sidebar.number_input("Patient Age")
+new_patient_gender = st.sidebar.text_input("Patient Gender")
 
 if st.sidebar.button("Add Patient"):
     if new_patient_name.strip() == "":
         st.sidebar.error("Patient name cannot be empty.")
+
+    elif new_patient_age == "":
+        st.sidebar.error("Patient age cannot be empty.")
+
+    elif new_patient_gender.strip() == "":
+        st.sidebar.error("Patient gender cannot be empty.")
     else:
         # Add patient to DB
-        new_patient_id = add_patient(user_id, new_patient_name.strip())
+        new_patient_id = add_patient(user_id, new_patient_name.strip(), new_patient_age, new_patient_gender.strip())
         st.sidebar.success(f"Patient '{new_patient_name}' added!")
         
         # Update session state and patient dict
@@ -345,4 +361,5 @@ if history:
 else:
 
     st.info("No predictions yet for this patient.")
+
 
