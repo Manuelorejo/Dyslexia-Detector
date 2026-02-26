@@ -140,11 +140,6 @@ else:
         </div>
         """, unsafe_allow_html=True)
 
-        if st.button(f"Select {pid}", key=f"btn_{pid}"):
-            st.session_state.selected_patient_id = pid
-            st.session_state.selected_patient_name = name
-            st.switch_page("pages/Predictions.py")
-
 # -----------------------
 # 📊 OVERALL PREDICTIONS PIE (USER ONLY)
 # -----------------------
@@ -231,4 +226,5 @@ if trend_data:
 
 
 conn.close()
+
 
