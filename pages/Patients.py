@@ -248,6 +248,7 @@ if st.sidebar.button("Add Patient"):
         st.session_state.selected_patient_id = new_patient_id
         patients = get_patients(user_id)
         patient_names = [pname for pid, pname in patients]
+        st.session_state.selected_patient_id = new_patient_id
         patient_dict = {pname: pid for pid, pname in patients}
         selected_patient = new_patient_name
         selected_patient_id = new_patient_id
@@ -365,6 +366,7 @@ if history:
 else:
 
     st.info("No predictions yet for this patient.")
+
 
 
 
