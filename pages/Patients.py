@@ -228,7 +228,7 @@ st.sidebar.markdown("### ➕ Add New Patient")
 
 new_patient_name = st.sidebar.text_input("Patient Name")
 new_patient_age = st.sidebar.number_input("Patient Age")
-new_patient_gender = st.selectbox("Select Gender:",    ["Male", "Female"])
+new_patient_gender = st.sidebar.selectbox("Select Gender:",    ["Male", "Female"])
 
 if st.sidebar.button("Add Patient"):
     if new_patient_name.strip() == "":
@@ -365,6 +365,7 @@ if history:
 else:
 
     st.info("No predictions yet for this patient.")
+
 
 
 
