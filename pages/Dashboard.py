@@ -131,19 +131,6 @@ else:
                 st.session_state.selected_patient_name = name
                 st.switch_page("pages/Patients.py")
 
-for i, (pid, name, age, gender) in enumerate(all_patients):
-    with cols[i % 3]:
-
-        # Only count predictions for this doctor's patient
-        c.execute("""
-            SELECT COUNT(*), MAX(timestamp) 
-            FROM Predictions 
-            WHERE patient_id = ?
-        """, (pid,))
-        total_preds, last_pred = c.fetchone()
-
-        last_pred_str = last_pred if last_pred else "No predictions"
-
         st.markdown(f"""
         <div class="patient-card">
             <h3>{name}</h3>
@@ -244,3 +231,4 @@ if trend_data:
 
 
 conn.close()
+
