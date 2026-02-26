@@ -288,10 +288,7 @@ else:
     st.session_state.selected_patient_id = selected_patient_id
 
 
-# SECURITY CHECK
-if not verify_patient_ownership(selected_patient_id, user_id):
-    st.error("Unauthorized patient access.")
-    st.stop()
+
 
 # -----------------------
 # MAIN CONTENT
@@ -372,6 +369,7 @@ if history:
 else:
 
     st.info("No predictions yet for this patient.")
+
 
 
 
