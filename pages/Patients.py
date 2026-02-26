@@ -143,6 +143,10 @@ transform = transforms.Compose([
 # -----------------------
 # DATABASE UTILITIES (MULTI-USER SAFE)
 # -----------------------
+
+def get_connection():
+    return sqlite3.connect(DB_FILE)
+    
 def get_patients(user_id):
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
@@ -224,7 +228,7 @@ st.sidebar.markdown("### ➕ Add New Patient")
 
 new_patient_name = st.sidebar.text_input("Patient Name")
 new_patient_age = st.sidebar.number_input("Patient Age")
-new_patient_gender = st.sidebar.text_input("Patient Gender")
+new_patient_gender = st.selectbox("Select Gender:",    ["Male", "Female"])
 
 if st.sidebar.button("Add Patient"):
     if new_patient_name.strip() == "":
@@ -247,6 +251,7 @@ if st.sidebar.button("Add Patient"):
         patient_dict = {pname: pid for pid, pname in patients}
         selected_patient = new_patient_name
         selected_patient_id = new_patient_id
+
 
 
 
@@ -360,6 +365,7 @@ if history:
 else:
 
     st.info("No predictions yet for this patient.")
+
 
 
 
