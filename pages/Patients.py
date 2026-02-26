@@ -346,29 +346,32 @@ if uploaded_file:
 # -----------------------
 st.subheader("👤 Patient Prediction History")
 
-history = get_patient_history(selected_patient_id)
 
-if history:
-    df = pd.DataFrame(history, columns=["Filename", "Prediction", "Confidence", "Timestamp"])
-    st.dataframe(df, height=300)
+try:
+    history = get_patient_history(selected_patient_id)
+    
+    if history:
+        df = pd.DataFrame(history, columns=["Filename", "Prediction", "Confidence", "Timestamp"])
+        st.dataframe(df, height=300)
+    
+        counts = df["Prediction"].value_counts()
+    
+        fig_pie = px.pie(
+            names=counts.index,
+            values=counts.values,
+            color=counts.index,
+            color_discrete_map={
+                "corrected": TEAL,
+                "normal": PRIMARY,
+                "reversal": RED
+            }
+        )
+        st.plotly_chart(fig_pie, use_container_width=True)
 
-    counts = df["Prediction"].value_counts()
-
-    fig_pie = px.pie(
-        names=counts.index,
-        values=counts.values,
-        color=counts.index,
-        color_discrete_map={
-            "corrected": TEAL,
-            "normal": PRIMARY,
-            "reversal": RED
-        }
-    )
-    st.plotly_chart(fig_pie, use_container_width=True)
-
-else:
+except:
 
     st.info("No predictions yet for this patient.")
+
 
 
 
