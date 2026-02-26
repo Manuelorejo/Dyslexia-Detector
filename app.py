@@ -137,7 +137,7 @@ with col2:
                 st.session_state.authenticated = True
                 st.session_state.user_id = user_id
                 st.success("Login Successful!")
-                st.switch_page("pages/Dashboard.py")
+                st.switch_page("pages/Landing.py")
             else:
                 st.error("Invalid email or password.")
 
@@ -159,5 +159,6 @@ with col2:
                     st.success("Account created successfully! Please login.")
                 else:
                     st.error("Email already exists.")
+
 
     st.markdown('</div>', unsafe_allow_html=True)
