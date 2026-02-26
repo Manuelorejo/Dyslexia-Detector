@@ -23,6 +23,8 @@ if "authenticated" not in st.session_state or not st.session_state.authenticated
     st.warning("🔒 Please login to access the prediction system.")
     st.stop()
 
+user_id = st.session_state.user_id
+
 # -----------------------
 # COLOR CONSTANTS
 # -----------------------
@@ -37,24 +39,20 @@ DB_FILE = "patients.db"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # -----------------------
-# 🎨 MODERN THEME CSS
+# 🎨 MODERN THEME CSS (UNCHANGED)
 # -----------------------
 st.markdown(f"""
 <style>
-
-/* Global background */
 .stApp {{
     background: linear-gradient(135deg, #E0F2FF 0%, #F0F9FF 100%);
     font-family: 'Segoe UI', sans-serif;
 }}
 
-/* Headings */
 h1, h2, h3 {{
     color: {PRIMARY};
     font-weight: 700;
 }}
 
-/* Cards */
 .card {{
     background: white;
     padding: 25px;
@@ -63,7 +61,6 @@ h1, h2, h3 {{
     margin-bottom: 30px;
 }}
 
-/* Upload card */
 .upload-card {{
     background: white;
     padding: 20px;
@@ -72,7 +69,6 @@ h1, h2, h3 {{
     text-align: center;
 }}
 
-/* Buttons */
 div.stButton > button {{
     background: linear-gradient(135deg, {PRIMARY}, {TEAL});
     color: white;
@@ -86,19 +82,16 @@ div.stButton > button:hover {{
     opacity: 0.9;
 }}
 
-/* Dataframe styling */
 .stDataFrame {{
     border-radius: 15px;
     overflow: hidden;
 }}
 
-/* Plot containers */
 .plotly-graph-div {{
     border-radius: 20px;
     box-shadow: 0px 10px 25px rgba(14,107,168,0.08);
 }}
 
-/* Sidebar gradient */
 section[data-testid="stSidebar"] {{
     background: linear-gradient(180deg, {PRIMARY}, {TEAL});
     color: white;
@@ -114,7 +107,6 @@ section[data-testid="stSidebar"] div.stButton > button {{
     background: white;
     color: {PRIMARY};
 }}
-
 </style>
 """, unsafe_allow_html=True)
 
@@ -150,31 +142,63 @@ transform = transforms.Compose([
 ])
 
 # -----------------------
-# DB UTILITIES
+# DATABASE UTILITIES (MULTI-USER SAFE)
 # -----------------------
-def get_patients():
+def get_patients(user_id):
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
-    c.execute("SELECT patient_id, name FROM Patients")
+    c.execute(
+        "SELECT patient_id, name FROM Patients WHERE user_id = ?",
+        (user_id,)
+    )
     patients = c.fetchall()
     conn.close()
     return patients
+
+
+def verify_patient_ownership(patient_id, user_id):
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute(
+        "SELECT patient_id FROM Patients WHERE patient_id = ? AND user_id = ?",
+        (patient_id, user_id)
+    )
+    result = c.fetchone()
+    conn.close()
+    return result is not None
+
 
 def add_prediction(patient_id, filename, prediction_class, confidence):
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
     c.execute(
-        "INSERT INTO Predictions (patient_id, filename, prediction_class, confidence, timestamp) VALUES (?, ?, ?, ?, ?)",
-        (patient_id, filename, prediction_class, confidence, datetime.datetime.now().isoformat())
+        """
+        INSERT INTO Predictions 
+        (patient_id, filename, prediction_class, confidence, timestamp) 
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (
+            patient_id,
+            filename,
+            prediction_class,
+            confidence,
+            datetime.datetime.now().isoformat()
+        )
     )
     conn.commit()
     conn.close()
+
 
 def get_patient_history(patient_id):
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
     c.execute(
-        "SELECT filename, prediction_class, confidence, timestamp FROM Predictions WHERE patient_id=? ORDER BY timestamp DESC",
+        """
+        SELECT filename, prediction_class, confidence, timestamp 
+        FROM Predictions 
+        WHERE patient_id = ?
+        ORDER BY timestamp DESC
+        """,
         (patient_id,)
     )
     rows = c.fetchall()
@@ -182,22 +206,37 @@ def get_patient_history(patient_id):
     return rows
 
 # -----------------------
-# SIDEBAR
+# SIDEBAR (FILTERED + SECURE)
 # -----------------------
 st.sidebar.title("👥 Patients")
 
-patients = get_patients()
+patients = get_patients(user_id)
 
 if not patients:
     st.sidebar.warning("No patients available.")
     st.stop()
 
-selected_patient = st.sidebar.selectbox(
-    "Select Patient",
-    options=[pname for pid, pname in patients]
-)
+patient_names = [pname for pid, pname in patients]
+patient_dict = {pname: pid for pid, pname in patients}
 
-selected_patient_id = next(pid for pid, pname in patients if pname == selected_patient)
+# If coming from dashboard
+if "selected_patient_id" in st.session_state:
+    selected_patient_id = st.session_state.selected_patient_id
+    selected_patient = next(
+        pname for pname, pid in patient_dict.items()
+        if pid == selected_patient_id
+    )
+else:
+    selected_patient = st.sidebar.selectbox(
+        "Select Patient",
+        options=patient_names
+    )
+    selected_patient_id = patient_dict[selected_patient]
+
+# SECURITY CHECK
+if not verify_patient_ownership(selected_patient_id, user_id):
+    st.error("Unauthorized patient access.")
+    st.stop()
 
 # -----------------------
 # MAIN CONTENT
@@ -229,7 +268,6 @@ if uploaded_file:
     st.markdown(f"## Prediction: **{pred_class.upper()}**")
     st.write(f"Confidence: {confidence*100:.2f}%")
 
-    # Bar chart
     fig_ind = go.Figure(go.Bar(
         x=CLASS_NAMES,
         y=probs[0].numpy(),
@@ -242,10 +280,11 @@ if uploaded_file:
     )
     st.plotly_chart(fig_ind, use_container_width=True)
 
-    # Save
+    # Save image
     patient_folder = os.path.join(UPLOAD_FOLDER, str(selected_patient_id))
     os.makedirs(patient_folder, exist_ok=True)
     image.save(os.path.join(patient_folder, uploaded_file.name))
+
     add_prediction(selected_patient_id, uploaded_file.name, pred_class, confidence)
 
     st.success("✅ Prediction saved to patient history!")

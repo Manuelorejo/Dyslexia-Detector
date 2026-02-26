@@ -14,18 +14,16 @@ if "authenticated" not in st.session_state or not st.session_state.authenticated
     st.warning("🔒 Please login to access the dashboard.")
     st.stop()
 
+# Get logged-in user
+user_id = st.session_state.user_id
+
 # -----------------------
-# CUSTOM CSS FOR DASHBOARD
+# CUSTOM CSS (UNCHANGED)
 # -----------------------
 st.markdown("""
 <style>
-/* General background */
-.stApp {
-    background-color: #F3F4F6;
-    font-family: 'Segoe UI', sans-serif;
-}
+.stApp { background-color: #F3F4F6; font-family: 'Segoe UI', sans-serif; }
 
-/* Patient Cards */
 .patient-card {
     padding: 20px;
     border-radius: 15px;
@@ -40,11 +38,8 @@ st.markdown("""
     transform: translateY(-5px);
     box-shadow: 0px 12px 25px rgba(0,0,0,0.2);
 }
-.patient-card small {
-    color: rgba(255,255,255,0.8);
-}
+.patient-card small { color: rgba(255,255,255,0.8); }
 
-/* Section headings */
 .section-title {
     font-size: 28px;
     font-weight: 700;
@@ -52,7 +47,6 @@ st.markdown("""
     color: #0E6BA8;
 }
 
-/* Plotly chart container */
 .plotly-graph-div {
     background-color: white !important;
     border-radius: 15px;
@@ -61,7 +55,6 @@ st.markdown("""
     margin-bottom: 30px;
 }
 
-/* Tabs */
 .stTabs [role="tablist"] button {
     font-weight: 600;
     color: #0E6BA8;
@@ -76,21 +69,79 @@ conn = sqlite3.connect(DB_FILE)
 c = conn.cursor()
 
 # -----------------------
-# PATIENT CARDS
+# 👥 PATIENT CARDS (FILTERED BY USER)
 # -----------------------
-c.execute("SELECT patient_id, name, age, gender FROM Patients")
+c.execute("""
+    SELECT patient_id, name, age, gender 
+    FROM Patients 
+    WHERE user_id = ?
+""", (user_id,))
+
 all_patients = c.fetchall()
 
 st.subheader("👥 Patients Overview", anchor="patients-overview")
-cols = st.columns(3)
+
+if not all_patients:
+    st.markdown("""
+    <div style="
+        background: white;
+        padding: 40px;
+        border-radius: 15px;
+        text-align: center;
+        box-shadow: 0px 8px 20px rgba(0,0,0,0.08);
+        margin-top: 20px;
+    ">
+        <h3 style="color:#0E6BA8; margin-bottom:10px;">
+            No Patients Yet
+        </h3>
+        <p style="color:#64748B; font-size:16px;">
+            You haven’t added any patients yet.
+            <br><br>
+            Once you add a patient, they will appear here.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+else:
+    cols = st.columns(3)
+
+    for i, (pid, name, age, gender) in enumerate(all_patients):
+        with cols[i % 3]:
+
+            c.execute("""
+                SELECT COUNT(*), MAX(timestamp) 
+                FROM Predictions 
+                WHERE patient_id = ?
+            """, (pid,))
+            total_preds, last_pred = c.fetchone()
+
+            last_pred_str = last_pred if last_pred else "No predictions"
+
+            st.markdown(f"""
+            <div class="patient-card">
+                <h3>{name}</h3>
+                <small>Age: {age}, {gender}</small><br>
+                <small>Predictions: {total_preds}</small><br>
+                <small>Last Prediction: {last_pred_str}</small>
+            </div>
+            """, unsafe_allow_html=True)
+
+            if st.button(f"Select {pid}", key=f"btn_{pid}"):
+                st.session_state.selected_patient_id = pid
+                st.session_state.selected_patient_name = name
+                st.switch_page("pages/Predictions.py")
 
 for i, (pid, name, age, gender) in enumerate(all_patients):
     with cols[i % 3]:
-        c.execute(
-            "SELECT COUNT(*), MAX(timestamp) FROM Predictions WHERE patient_id=?",
-            (pid,)
-        )
+
+        # Only count predictions for this doctor's patient
+        c.execute("""
+            SELECT COUNT(*), MAX(timestamp) 
+            FROM Predictions 
+            WHERE patient_id = ?
+        """, (pid,))
         total_preds, last_pred = c.fetchone()
+
         last_pred_str = last_pred if last_pred else "No predictions"
 
         st.markdown(f"""
@@ -105,12 +156,20 @@ for i, (pid, name, age, gender) in enumerate(all_patients):
         if st.button(f"Select {pid}", key=f"btn_{pid}"):
             st.session_state.selected_patient_id = pid
             st.session_state.selected_patient_name = name
-            st.rerun()
+            st.switch_page("pages/Predictions.py")
 
 # -----------------------
-# OVERALL PREDICTIONS PIE
+# 📊 OVERALL PREDICTIONS PIE (USER ONLY)
 # -----------------------
-c.execute("SELECT prediction_class, COUNT(*) FROM Predictions GROUP BY prediction_class")
+c.execute("""
+    SELECT prediction_class, COUNT(*) 
+    FROM Predictions 
+    WHERE patient_id IN (
+        SELECT patient_id FROM Patients WHERE user_id = ?
+    )
+    GROUP BY prediction_class
+""", (user_id,))
+
 overall_counts = c.fetchall()
 
 if overall_counts:
@@ -143,9 +202,17 @@ if overall_counts:
     st.plotly_chart(fig_overall, use_container_width=True)
 
 # -----------------------
-# PREDICTION TRENDS
+# 📈 PREDICTION TRENDS (USER ONLY)
 # -----------------------
-c.execute("SELECT DATE(timestamp), COUNT(*) FROM Predictions GROUP BY DATE(timestamp)")
+c.execute("""
+    SELECT DATE(timestamp), COUNT(*) 
+    FROM Predictions 
+    WHERE patient_id IN (
+        SELECT patient_id FROM Patients WHERE user_id = ?
+    )
+    GROUP BY DATE(timestamp)
+""", (user_id,))
+
 trend_data = c.fetchall()
 
 if trend_data:
