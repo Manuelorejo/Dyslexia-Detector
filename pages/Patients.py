@@ -224,6 +224,30 @@ def add_patient(user_id, name, age, gender):
 # -----------------------
 # ADD NEW PATIENT
 # -----------------------
+
+# Get all patients for current user
+patients = get_patients(user_id)
+
+if not patients:
+    st.sidebar.warning("No patients available.")
+    st.stop()
+
+# Create dictionary mapping name -> id
+patient_dict = {name: pid for pid, name in patients}
+
+# Sidebar selectbox
+selected_patient_name = st.sidebar.selectbox(
+    "👤 Select Patient",
+    options=list(patient_dict.keys())
+)
+
+# Map to patient_id
+selected_patient_id = patient_dict[selected_patient_name]
+
+# Save to session_state for persistence across reruns
+st.session_state.selected_patient_id = selected_patient_id
+
+
 st.sidebar.markdown("### ➕ Add New Patient")
 
 new_patient_name = st.sidebar.text_input("Patient Name")
@@ -371,6 +395,7 @@ try:
 except:
 
     st.info("No predictions yet for this patient.")
+
 
 
 
