@@ -40,6 +40,7 @@ def init_db():
             patient_id INTEGER NOT NULL,
             filename TEXT,
             prediction_class TEXT,
+            confidence DECIMAL(10,2)
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(patient_id) REFERENCES Patients(patient_id)
         )
@@ -97,5 +98,6 @@ def add_patient(user_id, name, age, gender):
     conn.close()
     
     
+
 
 
